@@ -1,4 +1,4 @@
-name: Build and push UBI Docker image
+name:  UBI Redhat image
 
 on:
   push:

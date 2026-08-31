@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/ubi:9.4
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.4
 
 ARG SONAR_SCANNER_VERSION=5.0.1.3006
 ARG JENKINS_AGENT_HOME=/home/jenkins
@@ -9,19 +9,19 @@ ENV DEBIAN_FRONTEND=noninteractive \
     SONAR_SCANNER_HOME=/opt/sonar-scanner \
     PATH="/opt/sonar-scanner/bin:${PATH}"
 
-# Install runtime dependencies for SonarScanner and Python-based automation
-RUN dnf install -y --setopt=tsflags=nodocs \
+# Install runtime dependencies for SonarScanner and Python-based automation using the
+# package set that is consistently available on UBI9 minimal images.
+RUN microdnf update -y --nodocs \
+    && microdnf install -y --nodocs \
         java-17-openjdk-headless \
-        curl \
         wget \
         unzip \
         git \
         ca-certificates \
         python3 \
         python3-pip \
-        python3-devel \
         shadow-utils \
-    && dnf clean all \
+    && microdnf clean all \
     && ln -sf /usr/bin/python3 /usr/bin/python \
     && python3 -m pip install --upgrade pip
 
