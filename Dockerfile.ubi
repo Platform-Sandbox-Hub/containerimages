@@ -1,0 +1,47 @@
+FROM registry.access.redhat.com/ubi9/ubi:9.4
+
+ARG SONAR_SCANNER_VERSION=5.0.1.3006
+ARG JENKINS_AGENT_HOME=/home/jenkins
+ARG UID=1000
+ARG GID=1000
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    SONAR_SCANNER_HOME=/opt/sonar-scanner \
+    PATH="/opt/sonar-scanner/bin:${PATH}"
+
+# Install runtime dependencies for SonarScanner and Python-based automation
+RUN dnf install -y --setopt=tsflags=nodocs \
+        java-17-openjdk-headless \
+        curl \
+        wget \
+        unzip \
+        git \
+        ca-certificates \
+        python3 \
+        python3-pip \
+        python3-devel \
+        shadow-utils \
+    && dnf clean all \
+    && ln -sf /usr/bin/python3 /usr/bin/python \
+    && python3 -m pip install --upgrade pip
+
+# Install SonarScanner CLI
+RUN curl -sSLo /tmp/sonar-scanner.zip \
+        "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_SCANNER_VERSION}-linux.zip" \
+    && unzip -q /tmp/sonar-scanner.zip -d /opt \
+    && mv /opt/sonar-scanner-${SONAR_SCANNER_VERSION}-linux ${SONAR_SCANNER_HOME} \
+    && rm /tmp/sonar-scanner.zip \
+    && chmod +x ${SONAR_SCANNER_HOME}/bin/sonar-scanner
+
+# Non-root Jenkins agent user
+RUN groupadd -g ${GID} jenkins \
+    && useradd -u ${UID} -g ${GID} -m -d ${JENKINS_AGENT_HOME} -s /bin/bash jenkins \
+    && mkdir -p /home/jenkins/agent \
+    && chown -R jenkins:jenkins /home/jenkins
+
+USER jenkins
+WORKDIR /home/jenkins/agent
+
+RUN python3 --version && sonar-scanner --version || true
+
+CMD ["/bin/bash"]
