@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/containerimages
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/deb-python311-sonar
 
 jobs:
   docker:
